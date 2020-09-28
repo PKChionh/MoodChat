@@ -1,0 +1,29 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+<title>MoodChat</title>
+<link rel="stylesheet" href="static/css/main.css">
+</head>
+
+<body>
+  <div class="container">
+    <h1>MoodChat</h1>
+
+    {% block content %}
+    {% for message in form.userInput1.errors %}
+    <div class="flash">{{ message }}</div>
+    {% endfor %}
+
+    <form method=post>
+
+      {{ form.userInput1.label }}
+      {{ form.userInput1 }}
+
+      {{ form.submit }}
+    </form>
+    {% endblock %}
+  </div>
+</body>
+
+</html>
