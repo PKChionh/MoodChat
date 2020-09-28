@@ -5,6 +5,9 @@ from string import punctuation
 import numpy as np
 import torch
 from nltk.tokenize import word_tokenize
+import nltk
+nltk.download('punkt')
+
 from torch.utils.data import TensorDataset, DataLoader
 from torch import nn
 from torch import optim
@@ -37,6 +40,10 @@ class Sen_Analy_LSTM(nn.Module):
     return h
 
   def forward (self, input_words):
+
+    # Temporary fix: Unable to access batch_size in this method
+    batch_size = 1
+
     embedded_words = self.embedding(input_words)
     lstm_out, h = self.lstm(embedded_words)
     lstm_out = self.dropout(lstm_out)
@@ -56,66 +63,104 @@ class InputForm(Form):
 
   submit = SubmitField("Enter")
 
-@app.route('/predict', methods=['GET'])
-def predict():
 
-  def preprocess_review(review):
+def preprocess_review(review):
 
-    with open('models/word_to_int_dict.json') as handle:
-      word_to_int_dict = json.load(handle)
+  with open('models/word_to_int_dict.json') as handle:
+    word_to_int_dict = json.load(handle)
 
-    review = review.translate(str.maketrans('', '', punctuation)).lower().rstrip()
+  review = review.translate(str.maketrans('', '', punctuation)).lower().rstrip()
       
-    tokenized = word_tokenize(review)
+  tokenized = word_tokenize(review)
 
-    if len(tokenized) >= 50:
-      review = tokenized[:50]
-    else:
-      review= ['0']*(50-len(tokenized)) + tokenized
+  if len(tokenized) >= 50:
+    review = tokenized[:50]
+  else:
+    review= ['0']*(50-len(tokenized)) + tokenized
 
-    final = []
+  final = []
 
-    for token in review:
-      try:
-        final.append(word_to_int_dict[token])
-      except:
-        final.append(word_to_int_dict[''])
+  for token in review:
+    try:
+      final.append(word_to_int_dict[token])
+    except:
+      final.append(word_to_int_dict[''])
 
-    return final  
-
-
-  request_json = request.get_json()
-  i = request_json['input']
-
-  batch_size = 1
-
-  # Vocab = 5401
-  # Embed = 50
-  # Hidden = 100
-  # Output = 1
-  # Layers = 2
-  model = Sen_Analy_LSTM(5401, 50, 100, 1, 2)
-
-  model.load_state_dict(torch.load("models/model_nlp.pkl"))
-  model.eval()
-  words = np.array([preprocess_review(review=i)])
-  padded_words = torch.from_numpy(words)
-  pred_loader = DataLoader(padded_words, batch_size = 1, shuffle = True)
-  for x in pred_loader:
-    output = model(x)[0].item()
-
-  response = json.dumps({'response': output})
-  return response, 200
-#  return "Predict"
+  return final  
 
 
 @app.route("/", methods=['GET', 'POST'])
-def home():
+def home2():
 
   form = InputForm(request.form)
 
   if request.method == 'POST' and form.validate():
     txtUserInput = request.form['userInput1']
+    print(f"if: {txtUserInput}")
+
+    if txtUserInput:
+      batch_size = 1
+
+      # Vocab = 5401
+      # Embed = 50
+      # Hidden = 100
+      # Output = 1
+      # Layers = 2
+      model = Sen_Analy_LSTM(5401, 50, 100, 1, 2)
+
+      model.load_state_dict(torch.load("models/model_nlp.pkl"))
+      model.eval()
+      words = np.array([preprocess_review(review=txtUserInput)])
+      padded_words = torch.from_numpy(words)
+      pred_loader = DataLoader(padded_words, batch_size = 1, shuffle = True)
+      for x in pred_loader:
+        output = model(x)[0].item()
+
+      print(f"Prediction: {output}")
+    else:
+      print("No output")
+  else:
+    print("elif")
+
+  return render_template('index.html', form=form)
+
+@app.route("/temp", methods=['GET', 'POST'])
+def home():
+
+  form = InputForm(request.form)
+
+  print("Home")
+
+  if request.method == 'POST' and form.validate():
+    txtUserInput = request.form['userInput1']
+
+    if txtUserInput:
+      #-- Original code: Get sentence input via JSON ---
+      #  request_json = request.get_json()
+      #  i = request_json['input']
+
+      batch_size = 1
+
+      # Vocab = 5401
+      # Embed = 50
+      # Hidden = 100
+      # Output = 1
+      # Layers = 2
+      model = Sen_Analy_LSTM(5401, 50, 100, 1, 2)
+
+      model.load_state_dict(torch.load("models/model_nlp.pkl"))
+      model.eval()
+      words = np.array([preprocess_review(review=i)])
+      padded_words = torch.from_numpy(words)
+      pred_loader = DataLoader(padded_words, batch_size = 1, shuffle = True)
+      for x in pred_loader:
+        output = model(x)[0].item()
+
+      print(f"Output: {output}")
+    else:
+      print("No output")
+  
+  print("End home()")
 
   return render_template('index.html', form=form)
 #  return "Hello"
