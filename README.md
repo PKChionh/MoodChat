@@ -12,7 +12,7 @@ This web app will read the user input, and provide a simple sentiment analysis o
 
 ## How I built it
 
-This project was built with PyTorch using LSTM model, and Flask as backend, for the Data Native Unlimited hackathon 2020 (dn-unlimited-hackathon.devpost.com).
+This project was built with PyTorch using LSTM model, and Flask as backend, for the Data Native Unlimited hackathon 2020 [dn-unlimited-hackathon.devpost.com](https://dn-unlimited-hackathon.devpost.com).
  
 ## Quick start
 
